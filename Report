@@ -1,0 +1,212 @@
+# Week 4 DevOps Pre-Class Assignment
+## Campus Event Notifier — Technical Preparation Report
+
+**Student:** Benigne Uwitonze  
+**GitHub Username:** benigne811  
+**Docker Hub Username:** bebenoo  
+**Repository:** [benigne811/devops-2025S-demo](https://github.com/benigne811/devops-2025S-demo)
+
+---
+
+## 1. Docker Image Build and Push
+
+I successfully built and pushed the Campus Event Notifier Docker image to Docker Hub using Docker Buildx with multi-platform support.
+
+**Docker image:**
+`bebenoo/campus-event-notifier:v1`
+
+**Platforms:**
+- linux/amd64
+- linux/arm64
+
+I also successfully pulled the image from Docker Hub to verify that it was publicly accessible.
+
+**Verification command:**
+```bash
+docker pull bebenoo/campus-event-notifier:v1
+```
+
+**Result:** Successful image download.
+
+---
+
+## 2. Development Environment Setup
+
+I installed and verified the required DevOps tools in Ubuntu running through WSL2 on Windows 11.
+
+| Tool | Installed version |
+|---|---|
+| Terraform | v1.17.1 |
+| Ansible Core | v2.20.1 |
+| Azure CLI | v2.91.0 |
+| Docker | v29.5.3 |
+
+I successfully authenticated with Azure using device-code login.
+
+**Active subscription:** Azure subscription 1.
+
+---
+
+## 3. Local Terraform Configuration
+
+I created a local Terraform configuration in:
+
+`preclass/local/`
+
+The directory contains:
+
+- `main.tf`
+- `variables.tf`
+- `outputs.tf`
+- `.terraform.lock.hcl`
+
+I configured Terraform to use the Docker provider and manage the Campus Event Notifier container.
+
+I successfully initialized Terraform, generated an execution plan, and applied the configuration.
+
+**Application access:**
+- First successful deployment: `http://localhost:8081`
+- Second deployment: `http://localhost:8082`
+
+I verified that the application was accessible and that the health endpoint returned:
+
+```json
+{"status": "ok"}
+```
+
+I also configured the Terraform output `app_url` to display the application's browser address.
+
+---
+
+## 4. Terraform Port-Change Experiment
+
+I changed the external port from 8081 to 8082 and ran:
+
+```bash
+terraform plan -var="image=bebenoo/campus-event-notifier:v1"
+```
+
+Terraform indicated that the Docker container needed to be destroyed and recreated because the external port change required resource replacement.
+
+After applying the changes, Terraform successfully created the replacement container.
+
+**Result:**
+
+The application was accessible on port 8082. However, the previously created event and administrator account were lost.
+
+This happened because the SQLite database was stored inside the container rather than in persistent storage. When Terraform replaced the container, the database data was lost.
+
+This experiment demonstrated why persistent storage is important when deploying stateful applications.
+
+After completing the experiment, I successfully destroyed the Terraform-managed resources using:
+
+```bash
+terraform destroy -var="image=bebenoo/campus-event-notifier:v1"
+```
+
+---
+
+## 5. Ansible Collections
+
+I verified that the required Ansible collections were installed.
+
+| Collection | Version |
+|---|---|
+| community.docker | 5.0.4 |
+| community.postgresql | 4.2.0 |
+
+Verification command:
+
+```bash
+ansible-galaxy collection list | grep community
+```
+
+Both required collections were successfully detected.
+
+---
+
+## 6. SSH Key Generation
+
+I successfully generated an RSA SSH key pair using:
+
+```bash
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/alu-devops -N ""
+```
+
+The public key was verified at:
+
+`~/.ssh/alu-devops.pub`
+
+The private key is stored locally and has not been shared.
+
+---
+
+## 7. Terraform Plugin Cache and HCP Terraform
+
+I configured the Terraform plugin cache directory:
+
+```bash
+mkdir -p ~/.terraform.d/plugin-cache
+```
+
+I created the Terraform CLI configuration file:
+
+```bash
+printf 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"\n' > ~/.terraformrc
+```
+
+I also successfully logged into HCP Terraform using:
+
+```bash
+terraform login
+```
+
+Authentication was successful, and the credentials were stored locally.
+
+---
+
+## 8. Azure Budget and Remaining Credit
+
+I successfully logged into my Azure subscription and created a budget with spending alert thresholds.
+
+**Azure subscription:** Azure subscription 1
+
+**Remaining credit:** $200.00
+
+**Amount used:** $0.00
+
+No Azure infrastructure resources were deployed for this exercise.
+
+---
+
+## 9. GitHub Submission
+
+I committed and pushed my local Terraform configuration and `.gitignore` updates to my GitHub fork.
+
+**Commit message:** Complete Week 4 local Terraform setup
+
+**Commit ID:** `53f343e`
+
+**Repository:** https://github.com/benigne811/devops-2025S-demo
+
+The Terraform state files and `.terraform` directory were excluded from Git using `.gitignore`.
+
+---
+
+## 10. Challenges and Lessons Learned
+
+During this exercise, I encountered and resolved several challenges:
+
+1. **Docker connection:** Terraform initially could not connect to the Docker daemon. I resolved this by configuring the Docker host environment variable.
+2. **Port conflict:** The initial application port was already occupied, so I changed the external port to 8081.
+3. **Container replacement:** Changing the external port to 8082 caused Terraform to replace the container, demonstrating the effect of resource changes.
+4. **Data persistence:** I learned that storing a database inside a container without persistent storage can result in data loss when the container is replaced.
+5. **Git line endings:** Working between Windows and WSL2 caused line-ending differences. I identified these and ensured that only the intended assignment files and `.gitignore` updates were committed.
+
+### Conclusion
+
+Through this assignment, I gained practical experience building and publishing Docker images, configuring Terraform, managing Docker containers as infrastructure, using Ansible collections, authenticating with Azure and HCP Terraform, and understanding the importance of persistent storage.
+
+I also learned how Terraform identifies infrastructure changes and determines when resources need to be replaced.
+
+**Outstanding administrative item:** I have not yet received the ALU-BSE GitHub organization invitation and have requested that it be resent.
